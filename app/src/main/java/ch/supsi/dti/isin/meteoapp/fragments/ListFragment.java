@@ -113,7 +113,7 @@ public class ListFragment extends Fragment {
     public void displayNewLocationDialog(){
         FragmentManager manager = getFragmentManager();
         NewLocationFragment newLocationFragment = new NewLocationFragment();
-        newLocationFragment.setTargetFragment(newLocationFragment,0);
+        newLocationFragment.setTargetFragment(ListFragment.this,0);
         newLocationFragment.show(manager,"fragment_new_location");
     }
 
