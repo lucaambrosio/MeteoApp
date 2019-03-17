@@ -1,0 +1,297 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{titling}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsmath}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{textcomp}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{float}
+
+\addtolength{\oddsidemargin}{-.875in}
+\addtolength{\evensidemargin}{-.875in}
+\addtolength{\textwidth}{1.75in}
+\addtolength{\topmargin}{-.875in}
+\addtolength{\textheight}{1.75in}
+
+\title{\Huge Applicazione Meteo \vspace{1cm}}
+\author{Riccardo Biella, Nicol Allegra, Luca Ambrosio}
+\date{Semestre primaverile 2019}
+\setcounter{page}{0}
+\pagestyle{fancy}
+\fancyhf{}
+
+\fancyfoot[C]{Page \thepage \hspace{1pt} of \pageref{LastPage}}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+\pagebreak
+
+
+\tableofcontents
+\lstset{language=C++}
+\pagebreak
+
+\section{Struttura delle classi}
+Le applicazioni androi vengono strutturate attraverso il pattern MVC, dove abbiamo i model, i layout e le activities/fragments, che si identificano rispettivamente in modelli, view e controller.
+Prima di addentrarci nell'analisi del codice d'esempio fornito, dobbiamo introdurre il concetto di fragments: i fragments costituiscono una sorta di controller minori a cui le activities si appoggiano per l'esecuzione di alcuni task.
+I fragments sono spesso utilizzati per gestire gli aggiornamenti della UI, in questo caso prendono il nome di UI fragments.
+Per utilizzare i fragments è necessario che un'activity definisca un layout che dovra contenere i vari fragments.
+
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.25]{images/fig1.png}
+\end{figure}
+
+\subsection{Package activities}
+\begin{itemize} 
+    \item \textbf{SingleFragmentActivity} \\
+    Nel caso più semplice, una view di un’attività contiene semplicemente un fragment. In questo caso il modo più elegante di procedere
+    consiste nel dichiare un'activity astratta che andrà estesa dalle activities che sono gestite da un singolo frammento.
+    In questa classe astratta si rimanda alle sottoclassi che la estenderanno, l'implementazione del metodo createFragment() che deve essere
+    differente per ogni classe figlia, mentre si implementa il metodo onCreate():
+    \begin{lstlisting}
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Setto il layout "container" che conterrà i vari fragments
+        setContentView(R.layout.fragment_single_fragment);
+
+        // Instanzio un gestore di fragments
+        FragmentManager fm = getSupportFragmentManager();
+
+        // Tramite l'id che ho settato nel fragment_single_fragment.xml 
+        // ottengo il mio fragment, controllo se è già istanziato
+        // quando giro il telefono l'activity si distrugge ma i fragments no
+        // vengono mantenuti da gestore di fragments
+        Fragment fragment = fm.findFragmentById(R.id.fragment_container);
+        if (fragment == null) {
+            fragment = createFragment();
+            // applichiamo il cambiamento tramite le transactions
+            fm.beginTransaction()
+                    .add(R.id.fragment_container, fragment)
+                    .commit();
+        }
+    }
+    \end{lstlisting}
+    Un'activity per essere tale deve estendere AppCompatActivity che permette di overraidare alcuni metodi utili.
+    Il metodo onCreate() riceve come parametro un Bundle, un oggetto in cui è possibile salvare dei dati serializzati, questo è utile nel caso in cui giro il dispositivo
+    e android distrugge e ricrea l'applicazione per passare da portrait a landscape, tramite questo oggetto posso salvare lo stato.
+    \item \textbf{MainActivity} \\
+    E' l'activity principale, è quella che viene lanciata all'avvio dell'applicazione. Tutte le activities sono indicate nell' AndroidManifest.xml
+    automaticamente al momento della creazione, dall'editor; in questo file l'activity principale è indicata come LAUNCHER.
+    Questa classe non fa altro che estendere la classe SingleFragmentActivity ed implementare il metodo astratto
+    createFragment(), all'interno del quale viene instanziato un fragment a cui viene delegata l'intera gestione dell'attività.
+    \item \textbf{DetailsActivity} \\
+    Questa classe gestisce la visualizzazione della pagina di dettaglio, al momento del click dell'utente su una Location presente del menù.
+    Anch'essa istanzia un fragment a cui delega la gestione della logica di business, ma a differenza della MainActivity implementa uno scambio di informazioni tra classi, tramite 
+    l'utilizzo degli Intent Extra. Viene definito un factory metod chiamato newInstance() (Best practices) che può essere invocato dalle classi che hanno la necessità di 
+    creare una DetailsActivity, in questo modo è la classe stessa a definire come vuole essere invocata, nel nostro caso necessita di un id per essere costistente.
+    \begin{lstlisting}
+public class DetailActivity extends SingleFragmentActivity {
+private static final String EXTRA_LOCATION_ID = 
+                    "ch.supsi.dti.isin.meteoapp.location_id";
+
+public static Intent newIntent(Context packageContext, UUID locationId) {
+    Intent intent = new Intent(packageContext, DetailActivity.class);
+    // Inserisco nell'Intent, che funziona come una sorta di mappa, l'id che mi è
+    // stato fornito dalla classe chiamante, con la chiave statica che definisco.
+    intent.putExtra(EXTRA_LOCATION_ID, locationId);
+    return intent;
+}
+
+// quando verrà invocato dalla classe chiamante: startActivity(intent), finiamo
+// nel metodo onCreate() della classe astratta SingleFragmentActivity che esegue
+// una chiamata al metodo seguente, dove recupero l'intent e l'informazione
+// relativa alla location_id, attraverso la chiave con cui l'ho salvato.
+@Override
+protected Fragment createFragment() {
+    UUID locationId = (UUID) getIntent().getSerializableExtra(EXTRA_LOCATION_ID);
+    return new DetailLocationFragment().newInstance(locationId);
+}
+}
+    \end{lstlisting}
+\end{itemize}
+
+\subsection{Package fragments}
+\begin{itemize} 
+    \item \textbf{DetailLocationFragment} \\
+    Questa classe rappresenta il fragment invocato dall'activity che si occupa di gestire la visualizzazione del dettaglio
+    di ogni location. Questo fragment definisce, analogamente a quanto visto per le activity, il modo in cui vuole essere invocato.
+    Nel nostro caso il fragment necessita di un location\_id per essere costistente. Per passare argomenti ad un fragment si utilizza
+    un meccanismo molto simile agli Intent Extra visti per le activity: ogni istanza di un fragment può contenere un oggetto di tipo Bundle. Il Bundle contiene delle coppie
+    di chiave-valore che funzionano esattamente come gli extras di un’Activity. Per creare degli argomenti da
+    passare ad un fragment, si crea prima l’oggetto Bundle, e poi si aggiungono i valori voluti.
+    Nel metodo onCreate() troviamo invece la lettura del parametro passato attraverso il Bundle, e la ricerca all'interno della lista di località
+    gestita dal LocationsHolder, dell'item corrispondente all'id della location che vogliamo gestire, di cui salviamo la referenza.  
+    Nel metodo onCreateView() vengono salvate le referenze ai widgets interessati, nel nostro caso salviamo la referenza ad un textView.
+    \item \textbf{ListFragment} \\
+    Questa classe è sicuramente la più complessa della soluzione, dispone di due attributi, un RecyclerView e un Adapter.
+    RecyclerView è un classe in grado di visualizzare una lista di figli di tipo View, i quali possono essere molto semplici o complessi.
+    Questa classe gestisce le view in memoria, ad esempio se un utente scrolla la lista, la classe riusa le View che ha in memoria per visualizzare il nuovo contenuto,
+    riciclandole continuamente.
+    L’unica responsabilità del RecyclerView è quella di riciclare le Views e di posizionarle sullo schermo. Per 
+    ”ottenere” le View, il RecyclerView necessita di due classi che vanno implementate: un Adapter e un ViewHolder.
+    Il lavoro del ViewHolder è quello di ”tenere” una view. L’Adapter è invece responsabile
+    di creare i ViewHolders necessari e di fare il bind dei ViewHolders ai dati (che sono contenuti nel Model).
+    Un RecyclerView non crea mai le Views da solo, ma chiede ad un adapter di creare dei ViewHolders, i quali
+    contengono le View.
+    \begin{figure}[H]
+        \center
+        \includegraphics[scale=0.28]{images/fig2.png}
+    \end{figure}
+    Contestualizziamo ora i concetti espressi nel caso della nostra applicazione meteo.
+    \begin{lstlisting}
+// ViewHolder
+private class LocationHolder extends RecyclerView.ViewHolder
+                                 implements View.OnClickListener {
+    private TextView mNameTextView;
+    private Location mLocation;
+
+    // viene definito il layout di ogni singola riga: list_item
+    // l'istanza in questione viene settata come ascoltatore della
+    // sua item, viene "recuperata" la referenza del widget sulla UI
+    public LocationHolder(LayoutInflater inflater, ViewGroup parent) {
+        super(inflater.inflate(R.layout.list_item, parent, false));
+        itemView.setOnClickListener(this);
+        mNameTextView = itemView.findViewById(R.id.name);
+    }
+
+    // sull'evento di click viene visualizzato il dettaglio della location
+    @Override
+    public void onClick(View view) {
+        Intent intent = DetailActivity.newIntent(getActivity(), mLocation.getId());
+        startActivity(intent);
+    }
+
+    // l'adapter utilizzerà questo metodo per fare il bind dei ViewHolder
+    // con i dati che sono contenuti nel model
+    public void bind(Location location) {
+        mLocation = location;
+        mNameTextView.setText(mLocation.getName());
+    }
+}
+    \end{lstlisting}
+\begin{lstlisting}
+    // Adapter
+    private class LocationAdapter extends RecyclerView.Adapter<LocationHolder> {
+        private List<Location> mLocations;
+
+        public LocationAdapter(List<Location> locations) {
+            mLocations = locations;
+        }
+
+        // l'Adapter si occupa della creazione dei ViewHolders
+        @Override
+        public LocationHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
+            return new LocationHolder(layoutInflater, parent);
+        }
+
+        // l'Adapter si occupa di bindare i dati ai ViewHolders
+        public void onBindViewHolder(LocationHolder holder, int position) {
+            Location location = mLocations.get(position);
+            holder.bind(location);
+        }
+
+        @Override
+        public int getItemCount() {
+            return mLocations.size();
+        }
+    }
+\end{lstlisting}
+In questa classe è stata utilizzata una toolbar ed un menù, questi ultimi sono gestiti dall’activity tramite callbacks. Quando è
+necessario visualizzare un menu, Android chiama il metodo onCreateOptionsMenu(Menu). Il menu va prima
+creato in un suo file XML. Si crea un XML che descrive il menu e lo si piazza nella cartella res/menu. 
+Il menu viene creato in Android Studio tramite tasto destro sulla cartella res e selezionando poi New –>
+Android Resource File. Di norma ha lo stesso nome del fragment che lo ”contiene”. Nel nostro esempio troviamo il file
+XML del menù all'interno della cartella res -> menu.
+\begin{lstlisting}
+    // In questo metodo viene iniettato il layout del menu.
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.fragment_list, menu);
+    }
+
+    // in questo metodo si definiscono le azioni da compiere quando un'item
+    // viene selezionata
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_add:
+                Toast toast = Toast.makeText(getActivity(),
+                        "Add a location",
+                        Toast.LENGTH_SHORT);
+                toast.show();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+\end{lstlisting}
+\end{itemize}
+
+\subsection{Package model}
+\begin{itemize} 
+    \item \textbf{Location} \\
+    Il modello Location contiene le informazioni riguardanti una singola località: un UUID autogenerato
+    all'interno del costruttore, un nome, e i getter e setter relativi a questi attributi.
+    \item \textbf{LocationsHolder} \\
+    E' una classe che sfrutta il pattern factory per essere instanziata. Essa contiene una lista di Location,
+    i metodi per aggiungere ed ottenere gli elementi da questa lista, che sfruttano composition and delega.
+\end{itemize}
+
+\subsection{Layout}
+\begin{itemize} 
+    \item \textbf{fragment\_detail\_location} \\
+    E' il layout utilizzato per visualizzare il dettaglio di una località, viene invocato nel metodo
+    onCreateView() nel fragment DetailLocationFragment.
+    \item \textbf{fragment\_list} \\
+    E' il layout utilizzato per visualizzare la lista delle località, viene invocato nel metodo
+    onCreateView() nel fragment ListFragment.
+    \item \textbf{fragment\_single\_fragment} \\
+    Identifica il fragment container invocato nel metodo onCreate() nella classe astratta SingleFragmentActivity.
+    \item \textbf{list\_item} \\
+    E' il layout utilizzato per visualizzare ogni singola item della lista gestita dal RecyclerView, viene invocato
+    all'interno del costruttore dell'inner class LocationHolder.
+\end{itemize}
+
+\section{Mockup applicazione}
+\begin{figure}[H]
+    \center
+    \includegraphics[scale=0.25]{images/fig3.png}
+\end{figure}
+\section{Requisiti}
+\begin{itemize}
+    \item Applicazione di tipo List - Detail (vedi Mockup)
+    \item Possibilità di aggiungere nuove location manualmente (con popup, nuova
+schermata, ...)
+    \item Utilizzo del GPS per leggere la posizione corrente e mostrarla in lista
+    \item Salvataggio delle location inserite dall'utente su database SQLite
+    \item Controllo periodico (tramite Background Service) delle temperature; invio di
+notifiche se la temperatura locale scende / sale sopra una certa soglia
+\end{itemize}
+\section{Features implementate}
+\subsection{Current Position}
+\textcolor{red}{QUESTA PARTE E' DA SISTEMARE}.
+Abbiamo utilizzato la smart location library per identificare la posizione del nostro dispositivo.
+Ottenendo tramite questa libreria coordinate geografiche, eseguiamo una richiesta alle API
+OpenWeatherMap, per ottenere il nome e le previsioni meteo della posizione corrente.
+Il parsing del json tornato avviene tramite moshi, (tipo un GSON 2.0 scritto in kotlin).
+\textcolor{red}{DESCRIVERE DIPENDENZE AGGIUNTE PER MOSHI E LE MODIFICHE AL MANIFEST PER PERMETTERE LE RICHIESTE HTTP}.
+\subsection{Add New Location}
+\textcolor{red}{Lo sto facendo con un dialog fragment ma mi sono incartato e va in exception. CHIEDERE A VANNI}
+\end{document}
