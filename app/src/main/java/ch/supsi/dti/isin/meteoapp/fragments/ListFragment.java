@@ -130,6 +130,11 @@ public class ListFragment extends Fragment {
 
             LocationsHolder.get(getActivity()).addLocation(location);
             mAdapter.notifyDataSetChanged();
+
+            Toast toast = Toast.makeText(getActivity(),
+                    "location added",
+                    Toast.LENGTH_SHORT);
+            toast.show();
         }
     }
 
@@ -139,15 +144,6 @@ public class ListFragment extends Fragment {
             case R.id.menu_add:
                 // qui bisogna inserire un dialog
                 displayNewLocationDialog();
-//                Location location = new Location();
-//                location.setName("nicol");
-//
-//                LocationsHolder.get(getActivity()).addLocation(location);
-//                mAdapter.notifyDataSetChanged();
-                Toast toast = Toast.makeText(getActivity(),
-                        "Add a location",
-                        Toast.LENGTH_SHORT);
-                toast.show();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
