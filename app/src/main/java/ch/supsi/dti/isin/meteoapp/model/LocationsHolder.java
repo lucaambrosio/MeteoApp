@@ -27,6 +27,14 @@ public class LocationsHolder {
         }
     }
 
+    public void addLocation(Location location){
+        mLocations.add(location);
+    }
+
+    public void updateCurrentLocation(String location){
+        mLocations.get(0).setName(location);
+    }
+
     public List<Location> getLocations() {
         return mLocations;
     }
