@@ -286,12 +286,117 @@ notifiche se la temperatura locale scende / sale sopra una certa soglia
 \end{itemize}
 \section{Features implementate}
 \subsection{Current Position}
-\textcolor{red}{QUESTA PARTE E' DA SISTEMARE}.
+\subsubsection{Smart Location Library}
+Attraverso questa libreria è possibile determinare la posizione geografica del dispositivo utilizzato. Per utilizzarla è necessario aggiungere la
+dependecy seguente, all'interno del build.gradle (Module:app):
+\begin{lstlisting}
+    implementation 'io.nlopez.smartlocation:library:3.3.3'
+\end{lstlisting}
+Inoltre è necessario inserire nell' AndroidManifest un permesso per identificare la posizione del dispositivo:
+\begin{lstlisting}
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+\end{lstlisting}
+Questo permesso è necessario ma non sufficente, dobbiamo richiedere a Runtime, all'utente, un ulteriore permesso
+per la localizzazione. Le procedure attorno a cui ruota il meccanismo di richiesta dei permessi
+e di localizzazione del device sono:
+\begin{lstlisting}
+@Override
+public void onRequestPermissionsResult(int requestCode,
+        @NonNull String[] permissions, @NonNull int[] grantResults) {
+    switch (requestCode) {
+        case 0: {
+            if (grantResults.length > 0 && grantResults[0] 
+                            == PackageManager.PERMISSION_GRANTED) {
+                Log.d("tag", "Permission granted");
+            }
+            return;
+        }
+    }
+}
+
+public void startLocationListener() {
+    if (ContextCompat.checkSelfPermission(getActivity(),
+            Manifest.permission.ACCESS_FINE_LOCATION) 
+                        != PackageManager.PERMISSION_GRANTED) {
+        ActivityCompat.requestPermissions(getActivity(), 
+            new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
+    } else {
+        LocationParams.Builder builder = new LocationParams.Builder()
+                    .setAccuracy(LocationAccuracy.HIGH).setDistance(0)
+                    .setInterval(5000); // 5 sec
+        SmartLocation.with(getActivity()).location().continuous()
+            .config(builder.build()).start(new OnLocationUpdatedListener() {
+            @Override
+            public void onLocationUpdated(android.location.Location location) {
+                //qui utilizzo la location ottenuta
+            }
+        });
+    }
+}
+\end{lstlisting}
+\subsubsection{OpenWeatherMap}
 Abbiamo utilizzato la smart location library per identificare la posizione del nostro dispositivo.
-Ottenendo tramite questa libreria coordinate geografiche, eseguiamo una richiesta alle API
+Grazie alle coordinate geografiche ottenute, eseguiamo una richiesta alle API
 OpenWeatherMap, per ottenere il nome e le previsioni meteo della posizione corrente.
-Il parsing del json tornato avviene tramite moshi, (tipo un GSON 2.0 scritto in kotlin).
-\textcolor{red}{DESCRIVERE DIPENDENZE AGGIUNTE PER MOSHI E LE MODIFICHE AL MANIFEST PER PERMETTERE LE RICHIESTE HTTP}.
+La richiesta HTTP è delegata ad una classe innestata in ListFragment, che estende un task asincrono, in grado
+di effettuare richieste HTTP che non influiscano sulla velocità dell'interfaccia grafica.
+La risposta HTTP è una stringa Json, per questo motivo è stata sviluppata una classe
+OpenWeatherData che funge da container per i dati parsati. Il parsing avviene attraverso
+una libreria chiamata Moshi, considerata come un GSON 2.0 scritto in kotlin.
+Dopo aver interpretato la risposta il modello viene aggiornato e la modifica viene notificata all'adapter.
+Per utilizzare Moshi è necessario aggiungere la seguente dipendenza:
+\begin{lstlisting}
+    implementation 'com.squareup.moshi:moshi-kotlin:1.8.0'
+\end{lstlisting}
+Mentre per permettere le richieste HTTP è necessario indicare nel Manifest la seguente permission:
+\begin{lstlisting}
+    <uses-permission android:name="android.permission.INTERNET" />
+\end{lstlisting}
 \subsection{Add New Location}
-\textcolor{red}{Lo sto facendo con un dialog fragment ma mi sono incartato e va in exception. CHIEDERE A VANNI}
+Questa feature è stata implementata utilizzando la classe NewLocationFragment, che estende un 
+DialogFragment. Dal ListFragment sull'evento di click del bottone (+) viene eseguito il codice seguente:
+\begin{lstlisting}
+FragmentManager manager = getFragmentManager();
+NewLocationFragment newLocationFragment = new NewLocationFragment();
+newLocationFragment.setTargetFragment(ListFragment.this,0);
+newLocationFragment.show(manager,"fragment_new_location");
+\end{lstlisting}
+Il parametro inserito nella form di dialog viene estrapolato attraverso il metodo
+onActivityResult. Il dato invece dall'interno del DialogFragment viene esposto con il metodo sendResultBack:
+\begin{lstlisting}
+public class NewLocationFragment extends DialogFragment{
+
+    EditText input;
+
+    @Override
+    public Dialog onCreateDialog(Bundle savedInstanceState) {
+        View view = LayoutInflater.from(getActivity())
+            .inflate(R.layout.fragment_new_location, null);
+        input = view.findViewById(R.id.editText);
+
+        return new AlertDialog.Builder(getActivity())
+                .setView(view)
+                .setTitle("Add new Location")
+                .setPositiveButton(android.R.string.ok, 
+                    new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        sendResultBack(Activity.RESULT_OK, 
+                                        input.getText().toString());
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .create();
+    }
+
+    private void sendResultBack(int resultCode, String name){
+        if(getTargetFragment() == null)
+            return;
+        Intent intent = new Intent();
+        intent.putExtra("name", name);
+        getTargetFragment().onActivityResult(getTargetRequestCode(),
+                                                    resultCode,intent);
+    }
+}
+\end{lstlisting}
 \end{document}

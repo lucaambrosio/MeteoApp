@@ -7,4 +7,6 @@
 \BOOKMARK [1][-]{section.3}{Requisiti}{}% 7
 \BOOKMARK [1][-]{section.4}{Features\040implementate}{}% 8
 \BOOKMARK [2][-]{subsection.4.1}{Current\040Position}{section.4}% 9
-\BOOKMARK [2][-]{subsection.4.2}{Add\040New\040Location}{section.4}% 10
+\BOOKMARK [3][-]{subsubsection.4.1.1}{Smart\040Location\040Library}{subsection.4.1}% 10
+\BOOKMARK [3][-]{subsubsection.4.1.2}{OpenWeatherMap}{subsection.4.1}% 11
+\BOOKMARK [2][-]{subsection.4.2}{Add\040New\040Location}{section.4}% 12
