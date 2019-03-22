@@ -35,11 +35,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
+import ch.supsi.dti.isin.meteoapp.OpenWeatherMapData.OpenWeatherData;
 import ch.supsi.dti.isin.meteoapp.R;
 import ch.supsi.dti.isin.meteoapp.activities.DetailActivity;
 import ch.supsi.dti.isin.meteoapp.model.Location;
 import ch.supsi.dti.isin.meteoapp.model.LocationsHolder;
-import ch.supsi.dti.isin.meteoapp.model.OpenWeatherData;
 import io.nlopez.smartlocation.OnLocationUpdatedListener;
 import io.nlopez.smartlocation.SmartLocation;
 import io.nlopez.smartlocation.location.config.LocationAccuracy;
@@ -74,15 +74,15 @@ public class ListFragment extends Fragment {
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
         } else {
             LocationParams.Builder builder = new LocationParams.Builder().setAccuracy(LocationAccuracy.HIGH).setDistance(0)
-                    .setInterval(5000); // 5 sec
+                    .setInterval(500); // mezzo sec
             SmartLocation.with(getActivity()).location().continuous().config(builder.build()).start(new OnLocationUpdatedListener() {
                 @Override
                 public void onLocationUpdated(android.location.Location location) {
 
-                    new JsonTask().execute("https://api.openweathermap.org/data/2.5/weather?lat="+location.getLatitude()
+                    JsonTask jsonTask = new JsonTask();
+                    jsonTask.execute("https://api.openweathermap.org/data/2.5/weather?lat="+location.getLatitude()
                             +"&lon="+location.getLongitude()+"&appid=ed2aa55e4a426aba9a830d295e909a1a");
                     mAdapter.notifyDataSetChanged();
-
                 }
             });
         }
@@ -229,8 +229,7 @@ public class ListFragment extends Fragment {
                 Moshi moshi = new Moshi.Builder().build();
                 JsonAdapter<OpenWeatherData> jsonAdapter = moshi.adapter(OpenWeatherData.class);
                 OpenWeatherData locationParsed = jsonAdapter.fromJson(buffer.toString());
-                LocationsHolder.get(getActivity()).updateCurrentLocation(locationParsed.toString());
-
+                LocationsHolder.get(getActivity()).updateCurrentLocation(locationParsed);
 
                 return buffer.toString();
 
@@ -253,5 +252,25 @@ public class ListFragment extends Fragment {
             }
             return null;
         }
+
+//        @Override
+//        protected void onPostExecute(JSONArray result) {
+//            pDialog.dismiss();
+//
+//            for (int i = 0; i < result.length(); i++) {
+//                try {
+//                    JSONObject row = result.getJSONObject(i);
+//                    String title = row.getString(Constants.TV_TITLE);
+//                    String code = row.getString(Constants.TV_CODE);
+//                    String image_url = row.getString(Constants.TV_IMAGE_URL);
+//                    tvList.add(new TV(title, image_url, code));
+//
+//                } catch (JSONException e) {
+//                    e.printStackTrace();
+//
+//                }
+//
+//            }
+//        }
     }
 }
