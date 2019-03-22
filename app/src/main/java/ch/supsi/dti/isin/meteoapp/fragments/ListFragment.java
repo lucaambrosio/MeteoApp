@@ -88,7 +88,6 @@ public class ListFragment extends Fragment {
         }
     }
 
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_list, container, false);
@@ -129,6 +128,8 @@ public class ListFragment extends Fragment {
             location.setName(nome);
 
             LocationsHolder.get(getActivity()).addLocation(location);
+            LocationsHolder.get(getActivity()).writeData(location);
+
             mAdapter.notifyDataSetChanged();
 
             Toast toast = Toast.makeText(getActivity(),
