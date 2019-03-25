@@ -11,6 +11,15 @@ public class Location {
     private double mtemp_min;
     private double mtemp_max;
 
+    public Location() {
+        Id = UUID.randomUUID();
+    }
+
+    public Location(UUID id, String mName) {
+        Id = id;
+        this.mName = mName;
+    }
+
     public double getMtemp() {
         return mtemp;
     }
@@ -67,7 +76,4 @@ public class Location {
         mName = name;
     }
 
-    public Location() {
-        Id = UUID.randomUUID();
-    }
 }
