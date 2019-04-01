@@ -9,10 +9,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import ch.supsi.dti.isin.meteoapp.OpenWeatherMapData.OpenWeatherData;
 import ch.supsi.dti.isin.meteoapp.database.DatabaseHelper;
 import ch.supsi.dti.isin.meteoapp.database.DbSchema;
 import ch.supsi.dti.isin.meteoapp.database.LocationsCursorWrapper;
+import ch.supsi.dti.isin.meteoapp.openWeatherMapData.OpenWeatherData;
 
 public class LocationsHolder {
 
@@ -30,7 +30,11 @@ public class LocationsHolder {
     }
 
     private LocationsHolder(Context context) {
+
         mLocations = new ArrayList<>();
+        Location currentLocation = new Location();
+        currentLocation.setName("Current location");
+        mLocations.add(currentLocation);
     }
 
     public void addLocation(Location location){
@@ -60,6 +64,7 @@ public class LocationsHolder {
     }
 
     public void readData() {
+
         Cursor c = mDatabase.query(DbSchema.LocationsTable.NAME, null, null, null, null, null, null);
         LocationsCursorWrapper cursor = new LocationsCursorWrapper(c);
         try {

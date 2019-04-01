@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -26,26 +25,22 @@ import android.widget.Toast;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.List;
 
-import ch.supsi.dti.isin.meteoapp.OpenWeatherMapData.OpenWeatherData;
+import ch.supsi.dti.isin.meteoapp.asyncTask.HttpRequestTask;
+import ch.supsi.dti.isin.meteoapp.Interface.OnHttpRequestTaskCompleted;
 import ch.supsi.dti.isin.meteoapp.R;
 import ch.supsi.dti.isin.meteoapp.activities.DetailActivity;
 import ch.supsi.dti.isin.meteoapp.model.Location;
 import ch.supsi.dti.isin.meteoapp.model.LocationsHolder;
+import ch.supsi.dti.isin.meteoapp.openWeatherMapData.OpenWeatherData;
 import io.nlopez.smartlocation.OnLocationUpdatedListener;
 import io.nlopez.smartlocation.SmartLocation;
 import io.nlopez.smartlocation.location.config.LocationAccuracy;
 import io.nlopez.smartlocation.location.config.LocationParams;
 
-public class ListFragment extends Fragment {
+public class ListFragment extends Fragment implements OnHttpRequestTaskCompleted{
     private RecyclerView mLocationRecyclerView;
     private LocationAdapter mAdapter;
 
@@ -79,10 +74,9 @@ public class ListFragment extends Fragment {
                 @Override
                 public void onLocationUpdated(android.location.Location location) {
 
-                    JsonTask jsonTask = new JsonTask();
-                    jsonTask.execute("https://api.openweathermap.org/data/2.5/weather?lat="+location.getLatitude()
-                            +"&lon="+location.getLongitude()+"&appid=ed2aa55e4a426aba9a830d295e909a1a");
-                    mAdapter.notifyDataSetChanged();
+                    HttpRequestTask requestTask = new HttpRequestTask(ListFragment.this);
+                    requestTask.execute("https://api.openweathermap.org/data/2.5/weather?lat="+location.getLatitude()
+                            +"&lon="+location.getLongitude()+"&units=metric&appid=ed2aa55e4a426aba9a830d295e909a1a");
                 }
             });
         }
@@ -124,8 +118,7 @@ public class ListFragment extends Fragment {
         if(requestCode == 0){
             String nome = (String) data.getSerializableExtra("name");
 
-            Location location = new Location();
-            location.setName(nome);
+            Location location = new Location(nome);
 
             LocationsHolder.get(getActivity()).addLocation(location);
             LocationsHolder.get(getActivity()).writeData(location);
@@ -149,6 +142,15 @@ public class ListFragment extends Fragment {
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    @Override
+    public void onHttpRequestTaskCompleted(String result) throws IOException {
+        Moshi moshi = new Moshi.Builder().build();
+        JsonAdapter<OpenWeatherData> jsonAdapter = moshi.adapter(OpenWeatherData.class);
+        OpenWeatherData openWeatherData = jsonAdapter.fromJson(result);
+        LocationsHolder.get(getActivity()).updateCurrentLocation(openWeatherData);
+        mAdapter.notifyDataSetChanged();
     }
 
     // Holder
@@ -200,78 +202,5 @@ public class ListFragment extends Fragment {
         public int getItemCount() {
             return mLocations.size();
         }
-    }
-
-    private class JsonTask extends AsyncTask<String, String, String> {
-
-        protected String doInBackground(String... params) {
-
-
-            HttpURLConnection connection = null;
-            BufferedReader reader = null;
-
-            try {
-                URL url = new URL(params[0]);
-                connection = (HttpURLConnection) url.openConnection();
-                connection.connect();
-
-                InputStream stream = connection.getInputStream();
-                reader = new BufferedReader(new InputStreamReader(stream));
-
-                StringBuffer buffer = new StringBuffer();
-                String line = "";
-
-                while ((line = reader.readLine()) != null) {
-                    buffer.append(line+"\n");
-                    Log.d("Response: ", "> " + line);
-
-                }
-
-                Moshi moshi = new Moshi.Builder().build();
-                JsonAdapter<OpenWeatherData> jsonAdapter = moshi.adapter(OpenWeatherData.class);
-                OpenWeatherData locationParsed = jsonAdapter.fromJson(buffer.toString());
-                LocationsHolder.get(getActivity()).updateCurrentLocation(locationParsed);
-
-                return buffer.toString();
-
-
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                if (connection != null) {
-                    connection.disconnect();
-                }
-                try {
-                    if (reader != null) {
-                        reader.close();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            return null;
-        }
-
-//        @Override
-//        protected void onPostExecute(JSONArray result) {
-//            pDialog.dismiss();
-//
-//            for (int i = 0; i < result.length(); i++) {
-//                try {
-//                    JSONObject row = result.getJSONObject(i);
-//                    String title = row.getString(Constants.TV_TITLE);
-//                    String code = row.getString(Constants.TV_CODE);
-//                    String image_url = row.getString(Constants.TV_IMAGE_URL);
-//                    tvList.add(new TV(title, image_url, code));
-//
-//                } catch (JSONException e) {
-//                    e.printStackTrace();
-//
-//                }
-//
-//            }
-//        }
     }
 }

@@ -24,7 +24,7 @@ public class NewLocationFragment extends DialogFragment{
 
         return new AlertDialog.Builder(getActivity())
                 .setView(view)
-                .setTitle("Add new Location")
+                .setTitle("Aggiungi una nuova località:")
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
