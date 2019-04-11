@@ -5,8 +5,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
@@ -28,10 +26,10 @@ import com.squareup.moshi.Moshi;
 import java.io.IOException;
 import java.util.List;
 
-import ch.supsi.dti.isin.meteoapp.asyncTask.HttpRequestTask;
 import ch.supsi.dti.isin.meteoapp.Interface.OnHttpRequestTaskCompleted;
 import ch.supsi.dti.isin.meteoapp.R;
 import ch.supsi.dti.isin.meteoapp.activities.DetailActivity;
+import ch.supsi.dti.isin.meteoapp.asyncTask.HttpRequestTask;
 import ch.supsi.dti.isin.meteoapp.model.Location;
 import ch.supsi.dti.isin.meteoapp.model.LocationsHolder;
 import ch.supsi.dti.isin.meteoapp.openWeatherMapData.OpenWeatherData;
@@ -48,26 +46,15 @@ public class ListFragment extends Fragment implements OnHttpRequestTaskCompleted
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
-        startLocationListener();
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case 0: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.d("tag", "Permission granted");
-                }
-                return;
-            }
+        if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Log.d("grantedCheck"," permesso");
+            startLocationListener();
         }
     }
 
+
+
     public void startLocationListener() {
-        if (ContextCompat.checkSelfPermission(getActivity(),
-                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
-        } else {
             LocationParams.Builder builder = new LocationParams.Builder().setAccuracy(LocationAccuracy.HIGH).setDistance(0)
                     .setInterval(500); // mezzo sec
             SmartLocation.with(getActivity()).location().continuous().config(builder.build()).start(new OnLocationUpdatedListener() {
@@ -79,7 +66,6 @@ public class ListFragment extends Fragment implements OnHttpRequestTaskCompleted
                             +"&lon="+location.getLongitude()+"&units=metric&appid=ed2aa55e4a426aba9a830d295e909a1a");
                 }
             });
-        }
     }
 
     @Override
@@ -146,11 +132,13 @@ public class ListFragment extends Fragment implements OnHttpRequestTaskCompleted
 
     @Override
     public void onHttpRequestTaskCompleted(String result) throws IOException {
-        Moshi moshi = new Moshi.Builder().build();
-        JsonAdapter<OpenWeatherData> jsonAdapter = moshi.adapter(OpenWeatherData.class);
-        OpenWeatherData openWeatherData = jsonAdapter.fromJson(result);
-        LocationsHolder.get(getActivity()).updateCurrentLocation(openWeatherData);
-        mAdapter.notifyDataSetChanged();
+        if(result!=null){
+            Moshi moshi = new Moshi.Builder().build();
+            JsonAdapter<OpenWeatherData> jsonAdapter = moshi.adapter(OpenWeatherData.class);
+            OpenWeatherData openWeatherData = jsonAdapter.fromJson(result);
+            LocationsHolder.get(getActivity()).updateCurrentLocation(openWeatherData);
+            mAdapter.notifyDataSetChanged();
+        }
     }
 
     // Holder
