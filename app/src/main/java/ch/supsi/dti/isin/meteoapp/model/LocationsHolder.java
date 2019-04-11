@@ -41,6 +41,12 @@ public class LocationsHolder {
         mLocations.add(location);
     }
 
+    public void clearStructure(){
+        Location currentLocation = mLocations.get(0);
+        mLocations.clear();
+        mLocations.add(currentLocation);
+    }
+
     public void updateCurrentLocation(OpenWeatherData locationParsed){
         mLocations.get(0).setName(locationParsed.getName());
         mLocations.get(0).setmIcon(locationParsed.getWeather().get(0).getIcon());
@@ -64,6 +70,8 @@ public class LocationsHolder {
     }
 
     public void readData() {
+
+        clearStructure();
 
         Cursor c = mDatabase.query(DbSchema.LocationsTable.NAME, null, null, null, null, null, null);
         LocationsCursorWrapper cursor = new LocationsCursorWrapper(c);

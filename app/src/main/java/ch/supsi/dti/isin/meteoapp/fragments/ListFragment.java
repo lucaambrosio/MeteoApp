@@ -46,7 +46,9 @@ public class ListFragment extends Fragment implements OnHttpRequestTaskCompleted
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
-        if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        LocationsHolder.get(getActivity()).readData();
+
+        if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             Log.d("grantedCheck"," permesso");
             startLocationListener();
         }

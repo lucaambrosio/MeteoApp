@@ -10,7 +10,6 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import ch.supsi.dti.isin.meteoapp.fragments.ListFragment;
-import ch.supsi.dti.isin.meteoapp.model.LocationsHolder;
 import ch.supsi.dti.isin.meteoapp.services.TemperatureMonitoringService;
 
 public class MainActivity extends SingleFragmentActivity {
@@ -25,7 +24,6 @@ public class MainActivity extends SingleFragmentActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        LocationsHolder.get(this).readData();
 
         TemperatureMonitoringService.setServiceAlarm(this, true);
 
