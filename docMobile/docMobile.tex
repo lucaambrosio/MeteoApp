@@ -166,7 +166,7 @@ private class LocationHolder extends RecyclerView.ViewHolder
     public LocationHolder(LayoutInflater inflater, ViewGroup parent) {
         super(inflater.inflate(R.layout.list_item, parent, false));
         itemView.setOnClickListener(this);
-        mNameTextView = itemView.findViewById(R.id.name);
+        mNameTextView = itemView.ViewById(R.id.name);
     }
 
     // sull'evento di click viene visualizzato il dettaglio della location

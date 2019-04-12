@@ -22,6 +22,7 @@ public class DetailLocationFragment extends Fragment {
     private static final String ARG_LOCATION_ID = "location_id";
 
     private Location mLocation;
+    private TextView mNameLocation;
     private TextView mIdTextView;
     private TextView mCurrentTemp;
     private TextView mMinTemp;
@@ -62,6 +63,9 @@ public class DetailLocationFragment extends Fragment {
 
         mIdTextView = v.findViewById(R.id.id_textView);
         mIdTextView.setText(mLocation.getmDescription());
+
+        mNameLocation= v.findViewById(R.id.textView2);
+        mNameLocation.setText(mLocation.getName());
 
         mCurrentTemp = v.findViewById(R.id.id_currentTemp);
         mCurrentTemp.setText(Double.toString(mLocation.getMtemp()) + " C°");
