@@ -1,4 +1,4 @@
-\BOOKMARK [1][-]{section.1}{Struttura\040delle\040classi}{}% 1
+\BOOKMARK [1][-]{section.1}{Analisi\040del\040codice\040fornito}{}% 1
 \BOOKMARK [2][-]{subsection.1.1}{Package\040activities}{section.1}% 2
 \BOOKMARK [2][-]{subsection.1.2}{Package\040fragments}{section.1}% 3
 \BOOKMARK [2][-]{subsection.1.3}{Package\040model}{section.1}% 4
@@ -10,3 +10,7 @@
 \BOOKMARK [3][-]{subsubsection.4.1.1}{Smart\040Location\040Library}{subsection.4.1}% 10
 \BOOKMARK [3][-]{subsubsection.4.1.2}{OpenWeatherMap}{subsection.4.1}% 11
 \BOOKMARK [2][-]{subsection.4.2}{Add\040New\040Location}{section.4}% 12
+\BOOKMARK [2][-]{subsection.4.3}{Data\040persistence}{section.4}% 13
+\BOOKMARK [2][-]{subsection.4.4}{ViewPager}{section.4}% 14
+\BOOKMARK [2][-]{subsection.4.5}{Graphic\040User\040Interface}{section.4}% 15
+\BOOKMARK [2][-]{subsection.4.6}{Temperature\040Monitoring\040Service}{section.4}% 16

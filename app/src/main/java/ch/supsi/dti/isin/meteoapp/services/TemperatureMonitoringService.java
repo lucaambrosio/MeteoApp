@@ -33,7 +33,7 @@ public class TemperatureMonitoringService extends IntentService implements OnHtt
     private static final double HOT_TEMPERATURE_THRESHOULD = 5;
     private static final double COLD_TEMPERATURE_THRESHOULD = 0;
 
-    private static final long POLL_INTERVAL_MS = TimeUnit.MINUTES.toMillis(1); // min. is 1 minute!
+    private static final long POLL_INTERVAL_MS = TimeUnit.MINUTES.toMillis(5); // min. is 1 minute!
 
     public TemperatureMonitoringService() {
         super(TAG);

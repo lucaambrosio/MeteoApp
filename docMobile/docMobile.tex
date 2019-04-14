@@ -43,7 +43,7 @@
 \lstset{language=C++}
 \pagebreak
 
-\section{Struttura delle classi}
+\section{Analisi del codice fornito}
 Le applicazioni androi vengono strutturate attraverso il pattern MVC, dove abbiamo i model, i layout e le activities/fragments, che si identificano rispettivamente in modelli, view e controller.
 Prima di addentrarci nell'analisi del codice d'esempio fornito, dobbiamo introdurre il concetto di fragments: i fragments costituiscono una sorta di controller minori a cui le activities si appoggiano per l'esecuzione di alcuni task.
 I fragments sono spesso utilizzati per gestire gli aggiornamenti della UI, in questo caso prendono il nome di UI fragments.
@@ -315,30 +315,28 @@ public void onRequestPermissionsResult(int requestCode,
 }
 
 public void startLocationListener() {
-    if (ContextCompat.checkSelfPermission(getActivity(),
-            Manifest.permission.ACCESS_FINE_LOCATION) 
-                        != PackageManager.PERMISSION_GRANTED) {
-        ActivityCompat.requestPermissions(getActivity(), 
-            new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
-    } else {
-        LocationParams.Builder builder = new LocationParams.Builder()
-                    .setAccuracy(LocationAccuracy.HIGH).setDistance(0)
-                    .setInterval(5000); // 5 sec
-        SmartLocation.with(getActivity()).location().continuous()
-            .config(builder.build()).start(new OnLocationUpdatedListener() {
-            @Override
-            public void onLocationUpdated(android.location.Location location) {
-                //qui utilizzo la location ottenuta
-            }
-        });
-    }
+    LocationParams.Builder builder = new LocationParams.Builder()
+    .setAccuracy(LocationAccuracy.HIGH).setDistance(0)
+    .setInterval(500); // mezzo sec
+    SmartLocation.with(getActivity()).location().continuous().config(builder.build())
+    .start(new OnLocationUpdatedListener() {
+        @Override
+        public void onLocationUpdated(android.location.Location location) {
+
+            HttpRequestTask requestTask = new HttpRequestTask(ListFragment.this);
+            requestTask.execute(
+            "https://api.openweathermap.org/data/2.5/weather?lat="
+            +location.getLatitude()+"&lon="+location.getLongitude()+
+            "&units=metric&appid=ed2aa55e4a426aba9a830d295e909a1a");
+        }
+    });
 }
 \end{lstlisting}
 \subsubsection{OpenWeatherMap}
 Abbiamo utilizzato la smart location library per identificare la posizione del nostro dispositivo.
 Grazie alle coordinate geografiche ottenute, eseguiamo una richiesta alle API
 OpenWeatherMap, per ottenere il nome e le previsioni meteo della posizione corrente.
-La richiesta HTTP è delegata ad una classe innestata in ListFragment, che estende un task asincrono, in grado
+La richiesta HTTP è delegata alla classe HttpRequestTask, che estende un task asincrono, in grado
 di effettuare richieste HTTP che non influiscano sulla velocità dell'interfaccia grafica.
 La risposta HTTP è una stringa Json, per questo motivo è stata sviluppata una classe
 OpenWeatherData che funge da container per i dati parsati. Il parsing avviene attraverso
@@ -398,5 +396,106 @@ public class NewLocationFragment extends DialogFragment{
                                                     resultCode,intent);
     }
 }
+\end{lstlisting}
+\subsection{Data persistence}
+Per permettere all'utente di ritrovare le proprie locazioni, dopo un riavvio dell'applicazione, è necessario implementare tecniche per la persistenza dei dati.
+Abbiamo utilizzato il database MySqlLite, attraverso le seguenti classi:
+\begin{itemize}
+    \item \textbf{DatabaseHelper}\\ Questa classe, estendendo SQLiteOpenHelper, si occupa della creazio delle tabelle a seguito del primo avvio dell'applicazione.
+    \begin{lstlisting}
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+            db.execSQL("create table " + DbSchema.LocationsTable.NAME + "("
+                            + " _id integer primary key autoincrement, "
+                            + DbSchema.LocationsTable.Cols.UUID
+                            + ", "
+                            + DbSchema.LocationsTable.Cols.NAME
+                            + ")"
+            );
+        }
+    \end{lstlisting}
+    \item \textbf{DbSchema}\\ Questa classe statica definisce lo schema del Database, è utilizzata per evitare che i nomi delle tabelle e dei
+    loro attributi vengano harcodati.
+    \item \textbf{LocationsCursorWrapper}\\ Questa classe è il cursore che ci permette di accedere in lettura ai dati, estende CursorWrapper, e definisce
+    al suo interno dei metodi che ci facilitino nelle operazioni di lettura dei contenuti.
+\end{itemize}
+\subsection{ViewPager}
+Il ViewPager permette all’utente di navigare attraverso delle view facendo lo ”swipe” con il dito (a de-
+stra o a sinistra). Per utilizzarlo è stato necessario definirlo all'interno di un layout
+e definire i metodi di supporto richiesti da tale oggetto, all'interno della classe DetailActivity:
+\begin{lstlisting}
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.detail_pager);
+        UUID entryId = (UUID) getIntent().getSerializableExtra(EXTRA_LOCATION_ID);
+        mViewPager = findViewById(R.id.entry_view_pager);
+        mEntries = LocationsHolder.get(this).getLocations();
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        mViewPager.setAdapter(new FragmentStatePagerAdapter(fragmentManager) {
+            @Override
+            public Fragment getItem(int position) {
+                Location entry = mEntries.get(position);
+                return DetailLocationFragment.newInstance(entry.getId());
+            }
+            @Override
+            public int getCount() {
+                return mEntries.size();
+            }});
+        for (int i = 0; i < mEntries.size(); i++) {
+            if (mEntries.get(i).getId().equals(entryId)) {
+                mViewPager.setCurrentItem(i);
+                break;
+    }    }}
+\end{lstlisting}
+\subsection{Graphic User Interface}
+L'interfaccia grafica utilizza delle risorse drawable che, prima di essere state aggiunte ai file di progetto, sono state processate da un tool online, per la
+creazione dei file multimediali con le differenti risoluzioni.
+L'applicazione è in grado di cambiare lo sfondo della pagina di dettaglio e la relativa icona, in base alle condizioni climatiche della location interessata. E' stato definito un layout di dettaglio apposito, per la modalità landscape.
+\subsection{Temperature Monitoring Service}
+Questa classe si occupa di eseguire il check periodico della temperatura nella location corrente e di inviare una notifica in caso in cui la temperatura superi o si abbassi oltre i valori di soglia predefiniti.
+Per eseguire questo check periodicamente, anche quando l'applicazione non è in esecuzione, utilizziamo un servizio di sistema chiamato AlarmManager, che permette di inviare degli intent.
+La nostra classe TemperatureMonitoringService, che estende IntentService, ricevendo questo intent, si attiverà. L'AlarmManager viene informato sul tipo di Intent da inviare attraverso la classe PendingIntent.
+Attraverso il metodo onHandleIntent possiamo definire il comportamento del service, alla ricezione di un Intent:
+\begin{lstlisting}
+@Override
+protected void onHandleIntent(Intent intent) {
+    Log.i(TAG, "Received an intent: " + intent);
+    if (ContextCompat.checkSelfPermission(this,
+    Manifest.permission.ACCESS_FINE_LOCATION)== PackageManager.PERMISSION_GRANTED) {
+        LocationParams.Builder builder = new LocationParams.Builder().
+                setAccuracy(LocationAccuracy.HIGH).setDistance(0)
+                .setInterval(500); // mezzo sec
+        SmartLocation.with(this).location().continuous()
+        .config(builder.build()).start(new OnLocationUpdatedListener() {
+            @Override
+            public void onLocationUpdated(android.location.Location location) {
+
+                HttpRequestTask requestTask = 
+                    new HttpRequestTask(TemperatureMonitoringService.this);
+                requestTask.execute(
+                    "https://api.openweathermap.org/data/2.5/weather?lat="
+                    +location.getLatitude()+"&lon="+location.getLongitude()
+                    +"&units=metric&appid=ed2aa55e4a426aba9a830d295e909a1a");
+            }
+        });
+}}
+\end{lstlisting}
+\vspace{0,3cm}
+Quando il Task richiamato dal service terminerà la sua esecuzione, verrà invocato il metodo seguente,
+che eseguirà il parsing della stringa Json ritornata ed eventualmente inviarà una notifica:\\
+\begin{lstlisting}
+@Override
+public void onHttpRequestTaskCompleted(String result) throws IOException {
+    Moshi moshi = new Moshi.Builder().build();
+    JsonAdapter<OpenWeatherData> jsonAdapter = moshi.adapter(OpenWeatherData.class);
+    OpenWeatherData openWeatherData = jsonAdapter.fromJson(result);
+    if(openWeatherData.getTemperature().getTemp() >= HOT_THRESHOULD){
+        sendNotification("Attention, today it is very hot, remember to drink a lot!");
+        Log.d(TAG,"sendNotification1");
+    }else if(openWeatherData.getTemperature().getTemp() <= COLD_THRESHOULD){
+        sendNotification("Attention, today it is very cold, the road can be icy!");
+        Log.d(TAG,"sendNotification2");
+}   }
 \end{lstlisting}
 \end{document}
