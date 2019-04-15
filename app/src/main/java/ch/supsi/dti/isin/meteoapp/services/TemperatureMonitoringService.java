@@ -33,7 +33,7 @@ public class TemperatureMonitoringService extends IntentService implements OnHtt
     private static final double HOT_TEMPERATURE_THRESHOULD = 5;
     private static final double COLD_TEMPERATURE_THRESHOULD = 0;
 
-    private static final long POLL_INTERVAL_MS = TimeUnit.MINUTES.toMillis(5); // min. is 1 minute!
+    private static final long POLL_INTERVAL_MS = TimeUnit.MINUTES.toMillis(1); // min. is 1 minute!
 
     public TemperatureMonitoringService() {
         super(TAG);
@@ -62,7 +62,7 @@ public class TemperatureMonitoringService extends IntentService implements OnHtt
         Log.i(TAG, "Received an intent: " + intent);
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             LocationParams.Builder builder = new LocationParams.Builder().setAccuracy(LocationAccuracy.HIGH).setDistance(0)
-                    .setInterval(500); // mezzo sec
+                    .setInterval(1000*60*5); // 5 min
             SmartLocation.with(this).location().continuous().config(builder.build()).start(new OnLocationUpdatedListener() {
                 @Override
                 public void onLocationUpdated(android.location.Location location) {

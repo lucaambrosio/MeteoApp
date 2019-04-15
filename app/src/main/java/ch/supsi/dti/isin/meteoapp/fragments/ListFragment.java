@@ -58,7 +58,7 @@ public class ListFragment extends Fragment implements OnHttpRequestTaskCompleted
 
     public void startLocationListener() {
             LocationParams.Builder builder = new LocationParams.Builder().setAccuracy(LocationAccuracy.HIGH).setDistance(0)
-                    .setInterval(500); // mezzo sec
+                    .setInterval(1000*60*5); // 5 min
             SmartLocation.with(getActivity()).location().continuous().config(builder.build()).start(new OnLocationUpdatedListener() {
                 @Override
                 public void onLocationUpdated(android.location.Location location) {
