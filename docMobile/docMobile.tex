@@ -44,7 +44,7 @@
 \pagebreak
 
 \section{Analisi del codice fornito}
-Le applicazioni androi vengono strutturate attraverso il pattern MVC, dove abbiamo i model, i layout e le activities/fragments, che si identificano rispettivamente in modelli, view e controller.
+Le applicazioni android vengono strutturate attraverso il pattern MVC, dove abbiamo i model, i layout e le activities/fragments, che si identificano rispettivamente in modelli, view e controller.
 Prima di addentrarci nell'analisi del codice d'esempio fornito, dobbiamo introdurre il concetto di fragments: i fragments costituiscono una sorta di controller minori a cui le activities si appoggiano per l'esecuzione di alcuni task.
 I fragments sono spesso utilizzati per gestire gli aggiornamenti della UI, in questo caso prendono il nome di UI fragments.
 Per utilizzare i fragments è necessario che un'activity definisca un layout che dovra contenere i vari fragments.
@@ -59,7 +59,7 @@ Per utilizzare i fragments è necessario che un'activity definisca un layout che
     \item \textbf{SingleFragmentActivity} \\
     Nel caso più semplice, una view di un’attività contiene semplicemente un fragment. In questo caso il modo più elegante di procedere
     consiste nel dichiare un'activity astratta che andrà estesa dalle activities che sono gestite da un singolo frammento.
-    In questa classe astratta si rimanda alle sottoclassi che la estenderanno, l'implementazione del metodo createFragment() che deve essere
+    In questa classe astratta si rimanda alle sottoclassi che la estenderanno, l'implementazione del metodo createFragment(), che deve essere
     differente per ogni classe figlia, mentre si implementa il metodo onCreate():
     \begin{lstlisting}
     @Override
@@ -75,7 +75,7 @@ Per utilizzare i fragments è necessario che un'activity definisca un layout che
         // Tramite l'id che ho settato nel fragment_single_fragment.xml 
         // ottengo il mio fragment, controllo se è già istanziato
         // quando giro il telefono l'activity si distrugge ma i fragments no
-        // vengono mantenuti da gestore di fragments
+        // vengono mantenuti dal gestore di fragments
         Fragment fragment = fm.findFragmentById(R.id.fragment_container);
         if (fragment == null) {
             fragment = createFragment();
@@ -214,7 +214,7 @@ private class LocationHolder extends RecyclerView.ViewHolder
 \end{lstlisting}
 In questa classe è stata utilizzata una toolbar ed un menù, questi ultimi sono gestiti dall’activity tramite callbacks. Quando è
 necessario visualizzare un menu, Android chiama il metodo onCreateOptionsMenu(Menu). Il menu va prima
-creato in un suo file XML. Si crea un XML che descrive il menu e lo si piazza nella cartella res/menu. 
+creato in un suo file XML. Si crea un XML che descrive il menu e lo si inserisce nella cartella res/menu. 
 Il menu viene creato in Android Studio tramite tasto destro sulla cartella res e selezionando poi New –>
 Android Resource File. Di norma ha lo stesso nome del fragment che lo ”contiene”. Nel nostro esempio troviamo il file
 XML del menù all'interno della cartella res -> menu.
@@ -401,7 +401,7 @@ public class NewLocationFragment extends DialogFragment{
 Per permettere all'utente di ritrovare le proprie locazioni, dopo un riavvio dell'applicazione, è necessario implementare tecniche per la persistenza dei dati.
 Abbiamo utilizzato il database MySqlLite, attraverso le seguenti classi:
 \begin{itemize}
-    \item \textbf{DatabaseHelper}\\ Questa classe, estendendo SQLiteOpenHelper, si occupa della creazio delle tabelle a seguito del primo avvio dell'applicazione.
+    \item \textbf{DatabaseHelper}\\ Questa classe, estendendo SQLiteOpenHelper, si occupa della creazione delle tabelle a seguito del primo avvio dell'applicazione.
     \begin{lstlisting}
         @Override
         public void onCreate(SQLiteDatabase db) {
@@ -498,4 +498,29 @@ public void onHttpRequestTaskCompleted(String result) throws IOException {
         Log.d(TAG,"sendNotification2");
 }   }
 \end{lstlisting}
+\section{Risultati ottenuti}
+\begin{figure}[!htb]
+    \minipage{0.23\textwidth}
+      \includegraphics[width=\linewidth]{images/sc2.jpg}
+      \caption{Main view}\label{fig:awesome_image1}
+    \endminipage\hfill
+    \minipage{0.23\textwidth}
+      \includegraphics[width=\linewidth]{images/sc3.jpg}
+      \caption{Detail view}\label{fig:awesome_image2}
+    \endminipage\hfill
+    \minipage{0.23\textwidth}%
+      \includegraphics[width=\linewidth]{images/sc4.jpg}
+      \caption{Detail view}\label{fig:awesome_image3}
+    \endminipage\hfill
+    \minipage{0.23\textwidth}%
+      \includegraphics[width=\linewidth]{images/sc1.jpg}
+      \caption{Notification}\label{fig:awesome_image3}
+    \endminipage
+\end{figure}
+\noindent Nelle immagini sopra riportate si osservano le viste principali dell'applicazione:
+\begin{itemize}
+    \item \textbf{Figure 1:} Vista principale dell'applicazione, in questa sezione è possibile inserire una nuova località e visualizzarla a schermo, insieme alla località corrente.
+    \item \textbf{Figure 2-3:} Cliccando su una località all'interno della lista è possibile visualizzarne la pagina di dettaglio in cui vengono riportati i dati relativi al nome della località, alla descrizione delle condizioni atmosferiche e alla temperatura massima, minima e corrente.
+    \item \textbf{Figure 4:} Periodicamente viene inviata una notifica nel caso in cui la temperatura corrente superi o si abbassi entro alcune soglie. I contenuti del messaggio possono essere i seguenti: \\\\ \textit{"Attention, today it is very hot, remember to drink a lot!"} \\ \textit{"Attention, today it is very cold, the road can be icy!"}
+\end{itemize}
 \end{document}

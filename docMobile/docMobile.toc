@@ -15,3 +15,4 @@
 \contentsline {subsection}{\numberline {4.4}ViewPager}{9}{subsection.4.4}% 
 \contentsline {subsection}{\numberline {4.5}Graphic User Interface}{10}{subsection.4.5}% 
 \contentsline {subsection}{\numberline {4.6}Temperature Monitoring Service}{10}{subsection.4.6}% 
+\contentsline {section}{\numberline {5}Risultati ottenuti}{11}{section.5}% 
